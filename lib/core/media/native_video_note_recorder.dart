@@ -5,25 +5,61 @@ import 'package:flutter/services.dart';
 import '../utils/logger.dart';
 
 /// Нативная запись видео-кружка (Android, Camera2 + MediaRecorder): пишет
-/// квадрат 480×480 сразу при съёмке — как официальный клиент. Превью отдаётся
-/// через Flutter [Texture] по [textureId]. media3-перекод не используется
-/// (серверный валидатор принимает только нативно записанный MP4).
+/// квадрат сразу при съёмке — как официальный клиент (по умолчанию 480×480@30,
+/// размер и fps настраиваются в дев-меню). Превью отдаётся через Flutter
+/// [Texture] по [textureId]. media3-перекод не используется (серверный
+/// валидатор принимает только нативно записанный MP4).
 class NativeVideoNoteRecorder {
   static const _channel = MethodChannel('ru.komet.app/video_note');
 
   int? textureId;
+  bool hasFlash = false;
   bool get isAvailable => Platform.isAndroid;
 
-  Future<bool> init({bool front = true}) async {
+  Future<bool> requestPermission() async {
+    if (!isAvailable) return false;
+    try {
+      return await _channel.invokeMethod<bool>('permission') ?? false;
+    } catch (e) {
+      logger.w('NativeVideoNoteRecorder.requestPermission: $e');
+      return false;
+    }
+  }
+
+  Future<bool> init({bool front = true, int size = 480, int fps = 30}) async {
     if (!isAvailable) return false;
     try {
       final res = await _channel.invokeMapMethod<String, dynamic>('init', {
         'front': front,
+        'size': size,
+        'fps': fps,
       });
       textureId = res?['textureId'] as int?;
+      hasFlash = res?['hasFlash'] as bool? ?? false;
       return textureId != null;
     } catch (e) {
       logger.w('NativeVideoNoteRecorder.init: $e');
+      return false;
+    }
+  }
+
+  Future<bool> switchCamera() async {
+    if (!isAvailable) return false;
+    try {
+      await _channel.invokeMethod('switch');
+      return true;
+    } catch (e) {
+      logger.w('NativeVideoNoteRecorder.switchCamera: $e');
+      return false;
+    }
+  }
+
+  Future<bool> setTorch(bool on) async {
+    if (!isAvailable || !hasFlash) return false;
+    try {
+      return await _channel.invokeMethod<bool>('torch', {'on': on}) ?? false;
+    } catch (e) {
+      logger.w('NativeVideoNoteRecorder.setTorch: $e');
       return false;
     }
   }
@@ -55,5 +91,6 @@ class NativeVideoNoteRecorder {
       await _channel.invokeMethod('dispose');
     } catch (_) {}
     textureId = null;
+    hasFlash = false;
   }
 }

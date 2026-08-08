@@ -6,8 +6,10 @@ import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../backend/modules/webapp.dart';
 import '../../../core/storage/spoofing_service.dart';
+import '../../../main.dart' show api;
 import '../../widgets/connection_status.dart';
 import '../../widgets/error_view.dart';
+import '../../widgets/small_spinner.dart';
 import '../../widgets/webview_permission_prompt.dart';
 
 class WebAppScreen extends StatefulWidget {
@@ -22,6 +24,8 @@ class WebAppScreen extends StatefulWidget {
   onConsoleMessage;
   final void Function(InAppWebViewController controller, WebUri? url)?
   onLoadStart;
+  final Future<WebAppLaunch> Function(String url)? onExternalCallback;
+  final bool closeAfterExternalCallback;
   final Future<NavigationActionPolicy?> Function(
     InAppWebViewController controller,
     NavigationAction navigationAction,
@@ -37,6 +41,8 @@ class WebAppScreen extends StatefulWidget {
     this.onWebViewCreated,
     this.onConsoleMessage,
     this.onLoadStart,
+    this.onExternalCallback,
+    this.closeAfterExternalCallback = false,
     this.shouldOverrideUrlLoading,
   });
 
@@ -63,7 +69,12 @@ class _WebAppScreenState extends State<WebAppScreen> {
       _launch = null;
     });
     try {
-      _userAgent = await SpoofingService.getWebViewUserAgent() ?? '';
+      // Тот же UA, что уходит в sessionInit (из handshake-устройства ядра),
+      // чтобы веб-аппы видели нативный клиент; фолбэк — браузерный UA спуфа.
+      _userAgent =
+          api.session?.userAgent() ??
+          await SpoofingService.getWebViewUserAgent() ??
+          '';
       final launch = await widget.loader();
       if (!mounted) return;
       setState(() => _launch = launch);
@@ -80,6 +91,37 @@ class _WebAppScreenState extends State<WebAppScreen> {
       return false;
     }
     return true;
+  }
+
+  Future<NavigationActionPolicy?> _handleNavigation(
+    InAppWebViewController controller,
+    NavigationAction action,
+  ) async {
+    final uri = action.request.url;
+    final callback = widget.onExternalCallback;
+    if (callback != null && uri?.queryParameters['externalCallback'] == '1') {
+      try {
+        final launch = await callback(uri.toString());
+        if (!mounted) return NavigationActionPolicy.CANCEL;
+        if (widget.closeAfterExternalCallback) {
+          Navigator.of(context).pop(launch);
+          return NavigationActionPolicy.CANCEL;
+        }
+        setState(() {
+          _launch = launch;
+          _loadError = null;
+        });
+        await controller.loadUrl(
+          urlRequest: URLRequest(url: WebUri(launch.url)),
+        );
+      } catch (e) {
+        if (mounted) setState(() => _loadError = e.toString());
+      }
+      return NavigationActionPolicy.CANCEL;
+    }
+    final handler = widget.shouldOverrideUrlLoading;
+    if (handler == null) return NavigationActionPolicy.ALLOW;
+    return handler(controller, action, _launch?.url);
   }
 
   @override
@@ -132,7 +174,7 @@ class _WebAppScreenState extends State<WebAppScreen> {
     }
     final launch = _launch;
     if (launch == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: SmallSpinner(size: 36));
     }
     return InAppWebView(
       initialUrlRequest: URLRequest(url: WebUri(launch.url)),
@@ -147,7 +189,9 @@ class _WebAppScreenState extends State<WebAppScreen> {
         transparentBackground: true,
         mediaPlaybackRequiresUserGesture: false,
         useHybridComposition: true,
-        useShouldOverrideUrlLoading: widget.shouldOverrideUrlLoading != null,
+        useShouldOverrideUrlLoading:
+            widget.shouldOverrideUrlLoading != null ||
+            widget.onExternalCallback != null,
         userAgent: _userAgent,
       ),
       onWebViewCreated: (controller) {
@@ -158,13 +202,11 @@ class _WebAppScreenState extends State<WebAppScreen> {
           askWebViewPermission(context, request),
       onConsoleMessage: widget.onConsoleMessage,
       onLoadStart: widget.onLoadStart,
-      shouldOverrideUrlLoading: widget.shouldOverrideUrlLoading == null
+      shouldOverrideUrlLoading:
+          widget.shouldOverrideUrlLoading == null &&
+              widget.onExternalCallback == null
           ? null
-          : (controller, action) => widget.shouldOverrideUrlLoading!(
-              controller,
-              action,
-              launch.url,
-            ),
+          : _handleNavigation,
       onProgressChanged: (controller, progress) {
         if (!mounted) return;
         setState(() => _progress = progress / 100);

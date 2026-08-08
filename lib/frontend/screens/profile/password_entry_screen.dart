@@ -4,9 +4,11 @@ import '../../../main.dart' show accountModule;
 import '../../../backend/modules/account.dart' show TwoFactorDetails;
 import '../../../core/storage/app_database.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../widgets/animated_slash_icon.dart';
 import '../../widgets/custom_notification.dart';
 import '../../widgets/glossy_pill.dart';
 import '../../widgets/primary_loading_button.dart';
+import '../../widgets/small_spinner.dart';
 
 class PasswordEntryScreen extends StatefulWidget {
   const PasswordEntryScreen({super.key});
@@ -142,7 +144,7 @@ class _PasswordEntryScreenState extends State<PasswordEntryScreen> {
     if (_isLoading) {
       return Scaffold(
         backgroundColor: cs.surface,
-        body: Center(child: CircularProgressIndicator(color: cs.primary)),
+        body: Center(child: SmallSpinner(size: 36, color: cs.primary)),
       );
     }
 
@@ -1439,8 +1441,10 @@ class _PasswordFieldState extends State<_PasswordField> {
           borderSide: BorderSide.none,
         ),
         suffixIcon: IconButton(
-          icon: Icon(
-            _visible ? Symbols.visibility_off : Symbols.visibility,
+          icon: AnimatedSlashIcon(
+            icon: Symbols.visibility,
+            slashedIcon: Symbols.visibility_off,
+            slashed: _visible,
             color: cs.onSurfaceVariant,
           ),
           onPressed: () => setState(() => _visible = !_visible),

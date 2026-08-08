@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:ui' as ui;
@@ -9,26 +10,46 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:video_player/video_player.dart';
 
 import '../../../core/utils/haptics.dart';
-import '../../../main.dart' show storiesModule;
+import '../../../main.dart' show animojiModule, storiesModule;
 import '../../../models/story.dart';
 import '../../widgets/custom_notification.dart';
 import '../../widgets/komet_avatar.dart';
+import '../../widgets/liquid_glass.dart';
+import '../../widgets/lottie_image.dart';
+import '../../widgets/small_spinner.dart';
 import 'story_owner_info.dart';
 
 const _quickReactions = ['❤️', '🔥', '😍', '👏', '😂', '😮'];
 const Duration _photoDuration = Duration(seconds: 5);
 
+class _ReactionItem {
+  final String emoji;
+  final String? lottieUrl;
+  final String? iconUrl;
+
+  const _ReactionItem(this.emoji, {this.lottieUrl, this.iconUrl});
+
+  bool get animated =>
+      (lottieUrl?.isNotEmpty ?? false) || (iconUrl?.isNotEmpty ?? false);
+}
+
+Offset? storyOriginOf(BuildContext context) {
+  final box = context.findRenderObject() as RenderBox?;
+  if (box == null || !box.hasSize) return null;
+  return box.localToGlobal(box.size.center(Offset.zero));
+}
+
 /// Открывает вьюер историй. Если задан [origin] (глобальный центр нажатого
 /// кольца) — открытие анимируется расширяющимся из этой точки кругом; иначе —
 /// масштабным «зумом».
-void openStoryViewer(
+Future<void> openStoryViewer(
   BuildContext context, {
   required List<StoryPreview> previews,
   int initialIndex = 0,
   Map<int, StoryOwnerInfo> ownerOverrides = const {},
   Offset? origin,
 }) {
-  Navigator.of(context).push(
+  return Navigator.of(context).push(
     PageRouteBuilder(
       opaque: false,
       transitionDuration: const Duration(milliseconds: 420),
@@ -125,6 +146,10 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
   final List<_Burst> _bursts = [];
   int _burstSeq = 0;
 
+  List<_ReactionItem> _reactions = _quickReactions
+      .map((e) => _ReactionItem(e))
+      .toList();
+
   VideoPlayerController? _video;
 
   StoryPreview get _owner => widget.previews[_ownerIndex];
@@ -148,6 +173,23 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
         if (s == AnimationStatus.completed) _advance();
       });
     _loadOwner(_ownerIndex, autostart: true);
+    unawaited(_loadReactions());
+  }
+
+  Future<void> _loadReactions() async {
+    try {
+      await animojiModule.ensureLoaded();
+    } catch (_) {
+      return;
+    }
+    final quick = animojiModule.quickAnimojis;
+    if (!mounted || quick.isEmpty) return;
+    setState(() {
+      _reactions = [
+        for (final a in quick)
+          _ReactionItem(a.emoji, lottieUrl: a.lottieUrl, iconUrl: a.iconUrl),
+      ];
+    });
   }
 
   @override
@@ -183,19 +225,16 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
     }
   }
 
-  /// Индекс, с которого начать показ: сначала — сохранённая позиция просмотра,
-  /// иначе — первая непрочитанная.
   int _resumeIndex(int index, List<Story> stories) {
     if (stories.isEmpty) return 0;
-    final ownerId = widget.previews[index].owner.ownerId;
-    final savedId = storiesModule.lastViewedStoryId(ownerId);
-    if (savedId != null) {
-      final i = stories.indexWhere((s) => s.id == savedId);
-      if (i >= 0) return i;
-    }
-    final read = widget.previews[index].readCount;
-    if (read > 0 && read < stories.length) return read;
-    return 0;
+    final preview = widget.previews[index];
+    final read = preview.readCount;
+    final firstUnread = (read > 0 && read < stories.length) ? read : 0;
+    final savedId = storiesModule.lastViewedStoryId(preview.owner.ownerId);
+    if (savedId == null) return firstUnread;
+    final saved = stories.indexWhere((s) => s.id == savedId);
+    if (saved <= firstUnread || saved >= stories.length - 1) return firstUnread;
+    return saved;
   }
 
   void _startStory(int index) {
@@ -260,6 +299,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
     if (_storyIndex + 1 < _ownerStories.length) {
       _startStory(_storyIndex + 1);
     } else {
+      storiesModule.clearLastViewed(_owner.owner.ownerId);
       _nextOwner();
     }
   }
@@ -315,9 +355,9 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
     }
   }
 
-  void _spawnBurst(String emoji, Alignment from) {
+  void _spawnBurst(_ReactionItem item, Alignment from) {
     final id = _burstSeq++;
-    setState(() => _bursts.add(_Burst(id, emoji, from)));
+    setState(() => _bursts.add(_Burst(id, item, from)));
   }
 
   void _removeBurst(int id) {
@@ -325,20 +365,22 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
     setState(() => _bursts.removeWhere((b) => b.id == id));
   }
 
-  Future<void> _toggleReaction(String emoji) async {
+  Future<void> _toggleReaction(_ReactionItem item) async {
     final story = _currentStory;
     if (story == null || story.id == 0) return;
-    final isSame = story.reaction?.id == emoji;
+    final isSame = story.reaction?.id == item.emoji;
     if (!isSame) {
       Haptics.medium();
-      _spawnBurst(emoji, const Alignment(0, 0.55));
+      _spawnBurst(item, const Alignment(0, 0.55));
+      final animoji = animojiModule.findByEmoji(item.emoji);
+      if (animoji != null) unawaited(animojiModule.noteUsed(animoji));
     } else {
       Haptics.tap();
     }
     final ok = await storiesModule.react(
       story.owner,
       story.id,
-      isSame ? null : StoryReaction(id: emoji),
+      isSame ? null : StoryReaction(id: item.emoji),
     );
     if (!mounted) return;
     if (ok) {
@@ -432,7 +474,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
           for (final burst in _bursts)
             _FloatingReaction(
               key: ValueKey(burst.id),
-              emoji: burst.emoji,
+              item: burst.item,
               alignment: burst.from,
               onDone: () => _removeBurst(burst.id),
             ),
@@ -489,14 +531,7 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
           const _TopScrim(),
           if (loading)
             const Center(
-              child: SizedBox(
-                width: 28,
-                height: 28,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2.4,
-                  color: Colors.white,
-                ),
-              ),
+              child: SmallSpinner(size: 28, color: Colors.white),
             ),
           SafeArea(
             child: Column(
@@ -627,33 +662,26 @@ class _StoryViewerScreenState extends State<StoryViewerScreen>
         child: Padding(
           padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
           child: Center(
-            child: ClipRRect(
+            child: GlassSurface(
               borderRadius: BorderRadius.circular(30),
-              child: BackdropFilter(
-                filter: ui.ImageFilter.blur(sigmaX: 14, sigmaY: 14),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(30),
-                    border: Border.all(
-                      color: Colors.white.withValues(alpha: 0.18),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      for (final emoji in _quickReactions)
-                        _ReactionButton(
-                          emoji: emoji,
-                          selected: current == emoji,
-                          onTap: () => _toggleReaction(emoji),
-                        ),
-                    ],
-                  ),
+              frostTint: Colors.white.withValues(alpha: 0.12),
+              frostSigma: 14,
+              border: Border.all(color: Colors.white.withValues(alpha: 0.18)),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 8,
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final item in _reactions)
+                      _ReactionButton(
+                        item: item,
+                        selected: current == item.emoji,
+                        onTap: () => _toggleReaction(item),
+                      ),
+                  ],
                 ),
               ),
             ),
@@ -766,12 +794,12 @@ class _SegmentBar extends StatelessWidget {
 
 // ─── Reaction emoji button ────────────────────────────────────────────────
 class _ReactionButton extends StatefulWidget {
-  final String emoji;
+  final _ReactionItem item;
   final bool selected;
   final VoidCallback onTap;
 
   const _ReactionButton({
-    required this.emoji,
+    required this.item,
     required this.selected,
     required this.onTap,
   });
@@ -815,7 +843,18 @@ class _ReactionButtonState extends State<_ReactionButton>
             padding: const EdgeInsets.symmetric(horizontal: 6),
             child: Transform.scale(
               scale: scale,
-              child: Text(widget.emoji, style: const TextStyle(fontSize: 28)),
+              child: widget.item.animated
+                  ? LottieImage(
+                      lottieUrl: widget.item.lottieUrl,
+                      url: widget.item.iconUrl,
+                      size: 30,
+                      shimmer: false,
+                      memCacheWidth: 90,
+                    )
+                  : Text(
+                      widget.item.emoji,
+                      style: const TextStyle(fontSize: 28),
+                    ),
             ),
           );
         },
@@ -879,19 +918,19 @@ class _TopScrim extends StatelessWidget {
 // ─── Floating reaction burst ──────────────────────────────────────────────
 class _Burst {
   final int id;
-  final String emoji;
+  final _ReactionItem item;
   final Alignment from;
-  const _Burst(this.id, this.emoji, this.from);
+  const _Burst(this.id, this.item, this.from);
 }
 
 class _FloatingReaction extends StatefulWidget {
-  final String emoji;
+  final _ReactionItem item;
   final Alignment alignment;
   final VoidCallback onDone;
 
   const _FloatingReaction({
     super.key,
-    required this.emoji,
+    required this.item,
     required this.alignment,
     required this.onDone,
   });
@@ -906,7 +945,7 @@ class _FloatingReactionState extends State<_FloatingReaction>
     vsync: this,
     duration: const Duration(milliseconds: 900),
   );
-  late final double _drift = (widget.emoji.hashCode % 40 - 20).toDouble();
+  late final double _drift = (widget.item.emoji.hashCode % 40 - 20).toDouble();
 
   @override
   void initState() {
@@ -940,10 +979,19 @@ class _FloatingReactionState extends State<_FloatingReaction>
                 opacity: opacity.clamp(0.0, 1.0),
                 child: Transform.scale(
                   scale: scale,
-                  child: Text(
-                    widget.emoji,
-                    style: const TextStyle(fontSize: 64),
-                  ),
+                  child: widget.item.animated
+                      ? LottieImage(
+                          lottieUrl: widget.item.lottieUrl,
+                          url: widget.item.iconUrl,
+                          size: 64,
+                          shimmer: false,
+                          repeat: false,
+                          memCacheWidth: 192,
+                        )
+                      : Text(
+                          widget.item.emoji,
+                          style: const TextStyle(fontSize: 64),
+                        ),
                 ),
               ),
             ),
@@ -1075,14 +1123,7 @@ class _OwnerCover extends StatelessWidget {
                 imageUrl: info?.avatarUrl,
               ),
               const SizedBox(height: 14),
-              const SizedBox(
-                width: 22,
-                height: 22,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white30,
-                ),
-              ),
+              const SmallSpinner(size: 22, color: Colors.white30),
             ],
           ),
         ),

@@ -65,6 +65,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get serverPortLabel => 'Порт';
 
   @override
+  String get serverTrustMincifryTitle => 'Доверять сертификату Минцифры';
+
+  @override
+  String get serverTrustMincifrySubtitle =>
+      'Нужно для api2.oneme.ru: его сертификат выпущен под корнем Russian Trusted Root CA, которого нет в обычном хранилище. Корень зашит в приложение, остальные хосты проверяются как раньше.';
+
+  @override
   String get serverApply => 'Применить и переподключиться';
 
   @override
@@ -94,7 +101,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get tokenLoginNote =>
-      'Вход по токену работает только со спуфом. Укажите данные устройства, к которому привязан токен, иначе аккаунт могут заблокировать.';
+      'Вход по токену работает только со спуфом. Укажите данные устройства, к которому привязан токен, в противном случае он может быть отозван.';
 
   @override
   String get tokenLoginButton => 'Войти';
@@ -141,7 +148,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get codeConfirmation2faWarning =>
-      'MAX может требовать 2FA на вашем аккаунте для входа. Если вы не получили код — установите 2FA с клиента, на котором вы авторизованы.';
+      'По умолчанию код приходит в МАХ. Если код не приходит по SMS - не заходите в Komet/MAX 30 минут, и попробуйте заново.';
 
   @override
   String get proxySettingsTitle => 'Прокси';
@@ -191,7 +198,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get spoofEnableSubtitleOff =>
-      'Выключена — используется реальное устройство';
+      'Выключена. Используется реальное устройство';
 
   @override
   String get spoofInfoHint =>
@@ -208,11 +215,11 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get spoofMethodPartialDescription =>
-      'Рекомендуемый метод. Используются случайные данные, но ваш реальный часовой пояс и локаль для большей правдоподобности.';
+      'Рекомендуемый метод. Используются случайные данные, но ваш реальный часовой пояс и локаль остаются настоящими для правдоподобности.';
 
   @override
   String get spoofMethodFullDescription =>
-      'Все данные, включая часовой пояс и локаль, генерируются случайно. Использование этого метода на ваш страх и риск!';
+      'Все данные генерируются случайно. Будьте осторожны.';
 
   @override
   String get spoofDeviceTypeTitle => 'Тип устройства';
@@ -286,7 +293,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get spoofButtonApply => 'Применить';
 
   @override
-  String get spoofDialogUnsureTitle => 'Ты уверен?';
+  String get spoofDialogUnsureTitle => 'Уверен?';
 
   @override
   String get spoofDialogUnsureContent =>
@@ -305,15 +312,14 @@ class AppLocalizationsRu extends AppLocalizations {
   String get spoofDialogApplyContent => 'Нужно перезайти в приложение, ок?';
 
   @override
-  String get spoofDialogApplyWarning =>
-      'Ваш спуф изменится сразу. Но из-за особенностей МАХ, для того что-бы это стало заметно, вы должны перелогиниться в аккаунт';
+  String get spoofDialogApplyWarning => 'Ваш спуф изменится сразу. 😜';
 
   @override
   String get spoofDialogReloginTitle => 'Готово!';
 
   @override
   String get spoofDialogReloginContent =>
-      'Из-за особенности МАХ, ваш спуф изменён, но видны изменения будут только при перезаходе в аккаунт.';
+      'Ваш спуф изменён, но в списке устройств видны изменения только при перезаходе в аккаунт.';
 
   @override
   String get spoofDialogReloginWarning => 'Перезайти сейчас?';
@@ -456,6 +462,25 @@ class AppLocalizationsRu extends AppLocalizations {
   String get chatInfoComments => 'комментарии:';
 
   @override
+  String get commentsWrite => 'Комментировать';
+
+  @override
+  String get commentsTitle => 'Комментарии';
+
+  @override
+  String commentsCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count комментария',
+      many: '$count комментариев',
+      few: '$count комментария',
+      one: '$count комментарий',
+    );
+    return '$_temp0';
+  }
+
+  @override
   String get chatInfoAplus => 'подтверждён Роскомнадзором:';
 
   @override
@@ -528,6 +553,9 @@ class AppLocalizationsRu extends AppLocalizations {
   String get msgActionsCopy => 'Копировать';
 
   @override
+  String get msgActionsSelectAll => 'Выбрать всё';
+
+  @override
   String get emojiSearchHint => 'Поиск эмодзи';
 
   @override
@@ -553,6 +581,15 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get msgActionsEditHistory => 'История изменений';
+
+  @override
+  String get msgActionsReadBy => 'Кем прочитано';
+
+  @override
+  String get msgActionsReadByEmpty => 'Пока никто не прочитал';
+
+  @override
+  String get msgActionsReadByUnknownUser => 'Пользователь';
 
   @override
   String get msgActionsReport => 'Пожаловаться';
@@ -586,7 +623,8 @@ class AppLocalizationsRu extends AppLocalizations {
   String get notificationsFkmAlreadyHasFcm => 'А зачем? У тебя уже FCM.';
 
   @override
-  String get notificationsFkmDownloadFcm => 'Скачай лучше FCM-версию.';
+  String get notificationsFkmDownloadFcm =>
+      'Установите FCM версию с официального источника';
 
   @override
   String get notificationsTitle => 'Уведомления';
@@ -663,7 +701,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get devicesTitle => 'Устройства';
 
   @override
-  String get devicesPromoTitle => 'Устройства в KOMET';
+  String get devicesPromoTitle => 'Устройства в Komet';
 
   @override
   String get devicesPromoSubtitle => 'Кто имеет доступ к вашему аккаунту?';
@@ -750,11 +788,17 @@ class AppLocalizationsRu extends AppLocalizations {
   String get appearanceVisualStyleGlossy => 'Glossy';
 
   @override
+  String get appearanceVisualStyleLiquidGlass => 'Liquid Glass';
+
+  @override
+  String get appearanceGlassMaterial => 'Стекло';
+
+  @override
   String get appearanceChatChromeTitle => 'Элементы экрана чата';
 
   @override
   String get appearanceChatChromeSubtitle =>
-      'Фон панелей сверху и снизу: цвет, размытие или прозрачно. При размытии и прозрачности сообщения заходят под панели';
+      'Фон панелей ввода и верхнего бара';
 
   @override
   String get appearanceChatChromeColor => 'Цвет';
@@ -766,13 +810,51 @@ class AppLocalizationsRu extends AppLocalizations {
   String get appearanceChatChromeNone => 'Нет';
 
   @override
-  String get appearanceChatChromeTransparent => 'Прозр.';
+  String get appearanceChatChromeTransparent => 'Frost blur';
+
+  @override
+  String get appearanceComposerTitle => 'Вид панели ввода';
+
+  @override
+  String get appearanceComposerSubtitle => 'Стиль и фон панели ввода сообщений';
+
+  @override
+  String get appearanceComposerBackgroundStandard => 'Default';
+
+  @override
+  String get appearanceComposerBackgroundFrost => 'Frost blur';
+
+  @override
+  String get appearanceNavPillTitle => 'Вид переключателей';
+
+  @override
+  String get appearanceNavPillSubtitle =>
+      'Переключатель разделов на экране чатов';
+
+  @override
+  String get appearanceNavPillGlossy => 'Glossy';
+
+  @override
+  String get appearanceNavPillFrost => 'G-FrostBlur';
+
+  @override
+  String get playbackPillAt => 'в';
+
+  @override
+  String get playbackPillYou => 'Вы';
 
   @override
   String get appearanceGradientTitle => 'Градиент';
 
   @override
   String get appearanceGradientSubtitle => 'Объём и блики в Glossy-капсулах';
+
+  @override
+  String get appearanceSpectrumTitle => 'Спектр на фоне';
+
+  @override
+  String get appearanceSpectrumSubtitle =>
+      'Экспериментально — живые полосы под интерфейсом';
 
   @override
   String get appearanceAccentColorTitle => 'Акцентный цвет';
@@ -832,10 +914,10 @@ class AppLocalizationsRu extends AppLocalizations {
       'Этот человек использует Komet! :3';
 
   @override
-  String get callStatusConnecting => 'Соединение';
+  String get callStatusConnecting => 'Соединение...';
 
   @override
-  String get callGroupConnecting => 'Соединение…';
+  String get callGroupConnecting => 'Соединение...';
 
   @override
   String get callGroupWaitingParticipants => 'Ожидание участников…';
@@ -1014,7 +1096,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get hubGamesTileSubtitle => 'Сыграть с собеседником';
 
   @override
-  String get hubCheckersTileSubtitle => 'Русские шашки';
+  String get hubCheckersTileSubtitle => 'Шашки';
 
   @override
   String get hubMoreSoonTitle => 'Скоро ещё…';
@@ -1130,6 +1212,9 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get contactProfileActionCall => 'Звонок';
+
+  @override
+  String get contactProfileActionAddContact => 'Добавить в контакты';
 
   @override
   String get contactProfileInfoPhone => 'Телефон';
@@ -1278,6 +1363,52 @@ class AppLocalizationsRu extends AppLocalizations {
   String get sharedDownload => 'Скачать';
 
   @override
+  String photoViewerCounter(int index, int total) {
+    return 'Фото $index из $total';
+  }
+
+  @override
+  String photoViewerCounterFile(int total) {
+    return 'ФАЙЛ из $total';
+  }
+
+  @override
+  String photoViewerSentToday(String sender, String time) {
+    return '$sender • сегодня в $time';
+  }
+
+  @override
+  String photoViewerSentOn(String sender, String date, String time) {
+    return '$sender • $date в $time';
+  }
+
+  @override
+  String get photoViewerSaveAs => 'Сохранить как…';
+
+  @override
+  String get photoViewerViewAll => 'Все фото чата';
+
+  @override
+  String get photoViewerRotate => 'Повернуть';
+
+  @override
+  String mediaViewerCounter(int index, int total) {
+    return '$index из $total';
+  }
+
+  @override
+  String get mediaViewerViewAll => 'Все медиа чата';
+
+  @override
+  String get videoViewerSettings => 'Настройки';
+
+  @override
+  String get videoViewerSpeed => 'Скорость';
+
+  @override
+  String get videoViewerQuality => 'Качество';
+
+  @override
   String get sharedCopyLink => 'Копировать ссылку';
 
   @override
@@ -1285,6 +1416,131 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get chatInfoActionLeave => 'Покинуть';
+
+  @override
+  String get chatInfoActionMuted => 'Без звука';
+
+  @override
+  String get chatInfoNotificationsOn => 'Уведомления включены';
+
+  @override
+  String get chatInfoNotificationsOff => 'Уведомления отключены';
+
+  @override
+  String get chatInfoMenuBlock => 'Заблокировать';
+
+  @override
+  String get chatInfoMenuUnblock => 'Разблокировать';
+
+  @override
+  String get chatInfoMenuDeleteChat => 'Удалить чат';
+
+  @override
+  String get chatInfoMenuClearHistory => 'Очистить историю';
+
+  @override
+  String get chatInfoClearHistoryTitle => 'Очистить историю';
+
+  @override
+  String get chatInfoClearHistoryMessage =>
+      'Все сообщения в этом чате будут удалены без возможности восстановления.';
+
+  @override
+  String get chatInfoClearHistoryForAll => 'Для всех';
+
+  @override
+  String get chatInfoClearHistoryConfirm => 'Очистить';
+
+  @override
+  String get chatInfoClearHistoryDone => 'История очищена';
+
+  @override
+  String get chatInfoDeleteChatTitle => 'Удалить чат';
+
+  @override
+  String get chatInfoDeleteChatMessage =>
+      'Чат будет удалён вместе со всей перепиской.';
+
+  @override
+  String get chatInfoDeleteChatConfirm => 'Удалить';
+
+  @override
+  String get chatInfoLeaveGroupTitle => 'Покинуть группу';
+
+  @override
+  String get chatInfoLeaveGroupMessage =>
+      'Вы больше не будете получать сообщения этой группы.';
+
+  @override
+  String get chatInfoLeaveChannelTitle => 'Покинуть канал';
+
+  @override
+  String get chatInfoLeaveChannelMessage =>
+      'Вы больше не будете получать публикации этого канала.';
+
+  @override
+  String get chatInfoLeaveConfirm => 'Покинуть';
+
+  @override
+  String get chatInfoLeaveFailed => 'Не удалось покинуть чат';
+
+  @override
+  String get chatInfoCallConfirmTitle => 'Начать звонок';
+
+  @override
+  String chatInfoCallConfirmMessage(String name) {
+    return 'Позвонить $name?';
+  }
+
+  @override
+  String get chatInfoConfirmYes => 'Да';
+
+  @override
+  String get chatInfoConfirmNo => 'Нет';
+
+  @override
+  String get chatInfoCallFailed => 'Не удалось начать звонок';
+
+  @override
+  String get chatInfoBlockConfirmTitle => 'Заблокировать';
+
+  @override
+  String chatInfoBlockConfirmMessage(String name) {
+    return 'Вы уверены, что хотите заблокировать $name?';
+  }
+
+  @override
+  String get chatInfoBlockDone => 'Пользователь заблокирован';
+
+  @override
+  String get chatInfoUnblockDone => 'Пользователь разблокирован';
+
+  @override
+  String get chatInfoBlockFailed => 'Не удалось изменить блокировку';
+
+  @override
+  String get chatInfoComplaintTitle => 'Пожаловаться';
+
+  @override
+  String get chatInfoComplaintSubtitle => 'Выберите причину жалобы';
+
+  @override
+  String get chatInfoComplaintSend => 'Пожаловаться';
+
+  @override
+  String get chatInfoComplaintClose => 'Закрыть';
+
+  @override
+  String get chatInfoComplaintEmpty => 'Не удалось загрузить причины жалобы';
+
+  @override
+  String get chatInfoComplaintSent => 'Жалоба отправлена';
+
+  @override
+  String get chatInfoComplaintFailed => 'Не удалось отправить жалобу';
+
+  @override
+  String get chatInfoActionCancel => 'Отмена';
 
   @override
   String get chatInfoBio => 'О себе';
@@ -1302,10 +1558,35 @@ class AppLocalizationsRu extends AppLocalizations {
   String get chatInfoAddMember => 'Добавить участника';
 
   @override
-  String get chatInfoRoleOwner => 'владелец';
+  String get chatInfoRoleOwner => 'Владелец';
 
   @override
-  String get chatInfoRoleAdmin => 'Адмін';
+  String get chatInfoRoleAdmin => 'Админ';
+
+  @override
+  String get chatInfoMemberDeleted => 'Аккаунт удалён';
+
+  @override
+  String get chatInfoInviteByLink => 'Пригласить по ссылке';
+
+  @override
+  String get chatInfoInviteLinkHint =>
+      'Вы можете пригласить любого человека по этой ссылке';
+
+  @override
+  String get chatInfoAddMembersAction => 'Добавить';
+
+  @override
+  String get chatInfoMembersSearchHint => 'Поиск';
+
+  @override
+  String get chatInfoAddMembersEmpty => 'Некого добавить';
+
+  @override
+  String get chatInfoMembersAdded => 'Участники добавлены';
+
+  @override
+  String get chatInfoAddMembersError => 'Не удалось добавить участников';
 
   @override
   String get chatInfoNoData => 'Нет данных';
@@ -1524,7 +1805,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get passwordEntryMismatchError => 'Пароли не совпадают';
 
   @override
-  String get passwordEntryInvalidEmailError => 'Введите корректный email';
+  String get passwordEntryInvalidEmailError => 'Введите нормальный email';
 
   @override
   String get passwordEntryInvalidCodeError => 'Введите 6-значный код';
@@ -1616,7 +1897,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get passwordEntryRemoveWarning =>
-      'Внимание! После удаления пароля защита вашего аккаунта ослабнет.';
+      'После удаления пароля ваш аккаунт будет менее защищен. Уверены?';
 
   @override
   String get cloudStorageNoActiveProfile => 'Нет активного профиля';
@@ -1855,6 +2136,18 @@ class AppLocalizationsRu extends AppLocalizations {
   String get attachSheetSectionInProgress => 'Раздел в разработке';
 
   @override
+  String get attachSheetContact => 'Контакт';
+
+  @override
+  String get attachSheetContactSearchHint => 'Поиск по контактам';
+
+  @override
+  String get attachSheetNoContacts => 'У вас пока нет контактов';
+
+  @override
+  String get attachSheetNoContactsFound => 'Контакты не найдены';
+
+  @override
   String get attachSheetNoGalleryAccessTitle => 'Нет доступа к галерее';
 
   @override
@@ -2028,4 +2321,197 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get updateDownloadFailed => 'Не удалось скачать обновление';
+
+  @override
+  String get updateCheck => 'Проверить обновление';
+
+  @override
+  String get updateChecking => 'Проверяем обновления…';
+
+  @override
+  String get updateUpToDate => 'Установлена актуальная версия';
+
+  @override
+  String get updateCheckFailed =>
+      'Не удалось проверить обновления. Повторите позже';
+
+  @override
+  String get profileResurrecting =>
+      'Упс! Сервер не прислал profile. Попробую регенерировать…';
+
+  @override
+  String get profilePhoneRegenFailed =>
+      'Не удалось регенерировать данные об номере. Перезайдите и сообщите об проблеме разработчикам';
+
+  @override
+  String get addContactTitle => 'Новый контакт';
+
+  @override
+  String get addContactFirstName => 'Имя';
+
+  @override
+  String get addContactLastName => 'Фамилия (необязательно)';
+
+  @override
+  String get addContactSave => 'Сохранить контакт';
+
+  @override
+  String addContactNotFound(String phone) {
+    return '$phone не найден';
+  }
+
+  @override
+  String get addContactNotFoundSubtitle => 'Этого номера пока нет в приложении';
+
+  @override
+  String get addContactSearchOther => 'Искать другой номер';
+
+  @override
+  String get addContactError => 'Не удалось добавить контакт';
+
+  @override
+  String get contactBubbleNew => 'Новый контакт';
+
+  @override
+  String get contactBubbleAlreadyAdded => 'Уже твой контакт';
+
+  @override
+  String get contactBubbleOpenProfile => 'Открыть профиль';
+
+  @override
+  String get miniAppOpen => 'Открыть';
+
+  @override
+  String get miniAppFailed => 'Не удалось открыть приложение';
+
+  @override
+  String get editContactMenu => 'Редактировать контакт';
+
+  @override
+  String get editContactTitle => 'Редактировать контакт';
+
+  @override
+  String get editContactFirstName => 'Имя';
+
+  @override
+  String get editContactLastName => 'Фамилия';
+
+  @override
+  String get editContactSave => 'Сохранить';
+
+  @override
+  String get editContactDelete => 'Удалить контакт';
+
+  @override
+  String get editContactDeleteConfirmTitle => 'Удалить контакт?';
+
+  @override
+  String get editContactDeleteConfirmBody =>
+      'Контакт будет удалён из вашего списка.';
+
+  @override
+  String get editContactDeleteCancel => 'Отмена';
+
+  @override
+  String get editContactError => 'Не удалось сохранить изменения';
+
+  @override
+  String get downloadsTitle => 'Недавние загрузки';
+
+  @override
+  String get downloadsTooltip => 'Загрузки';
+
+  @override
+  String get downloadsSettings => 'Настройки';
+
+  @override
+  String get downloadsEmpty => 'Скачанные файлы появятся здесь';
+
+  @override
+  String get downloadsUnknownSource => 'Источник неизвестен';
+
+  @override
+  String get downloadsPhoto => 'Фото';
+
+  @override
+  String get downloadsVideo => 'Видео';
+
+  @override
+  String get downloadsGif => 'GIF';
+
+  @override
+  String get downloadsAudio => 'Аудио';
+
+  @override
+  String get downloadsFile => 'Файл';
+
+  @override
+  String get downloadsOpenFailed => 'Не удалось открыть файл';
+
+  @override
+  String get downloadsClearHistory => 'Очистить историю загрузок';
+
+  @override
+  String get downloadsClearTitle => 'Очистить историю загрузок?';
+
+  @override
+  String get downloadsClearBody =>
+      'Файлы останутся на устройстве, но этот список будет очищен.';
+
+  @override
+  String get downloadsClearConfirm => 'Очистить';
+
+  @override
+  String get downloadsHistoryCleared => 'История загрузок очищена';
+
+  @override
+  String uploadNotificationPhotos(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count фото',
+      one: 'Фото',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get uploadNotificationVideo => 'Видео';
+
+  @override
+  String get uploadNotificationVideoNote => 'Кружок';
+
+  @override
+  String get uploadNotificationVoice => 'Голосовое сообщение';
+
+  @override
+  String get uploadNotificationFile => 'Файл';
+
+  @override
+  String uploadNotificationMultiple(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Отправка файлов: $count',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get uploadNotificationPreparing => 'Подготовка…';
+
+  @override
+  String uploadSpeedBytes(String value) {
+    return '$value Б/с';
+  }
+
+  @override
+  String uploadSpeedKb(String value) {
+    return '$value КБ/с';
+  }
+
+  @override
+  String uploadSpeedMb(String value) {
+    return '$value МБ/с';
+  }
 }

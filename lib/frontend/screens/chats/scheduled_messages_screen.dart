@@ -1,6 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:m3e_collection/m3e_collection.dart'
+    show ExpressiveRefreshIndicator;
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../backend/modules/messages.dart';
@@ -15,6 +17,8 @@ import '../../widgets/confirm_dialog.dart';
 import '../../widgets/custom_notification.dart';
 import '../../widgets/schedule_time_picker.dart';
 import '../../widgets/sheet_helpers.dart';
+import '../../widgets/small_spinner.dart';
+import '../../widgets/reload_on_reconnect.dart';
 
 class ScheduledMessagesScreen extends StatefulWidget {
   final int chatId;
@@ -33,7 +37,8 @@ class ScheduledMessagesScreen extends StatefulWidget {
       _ScheduledMessagesScreenState();
 }
 
-class _ScheduledMessagesScreenState extends State<ScheduledMessagesScreen> {
+class _ScheduledMessagesScreenState extends State<ScheduledMessagesScreen>
+    with ReloadOnReconnect {
   final List<CachedMessage> _messages = [];
   StreamSubscription<Packet>? _pushSub;
   bool _loading = true;
@@ -57,6 +62,9 @@ class _ScheduledMessagesScreenState extends State<ScheduledMessagesScreen> {
     _pushSub?.cancel();
     super.dispose();
   }
+
+  @override
+  void reloadAfterReconnect() => _load();
 
   Future<void> _load() async {
     final list = await messagesModule.fetchDelayedMessages(
@@ -258,10 +266,10 @@ class _ScheduledMessagesScreenState extends State<ScheduledMessagesScreen> {
         ),
       ),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: SmallSpinner(size: 36))
           : _messages.isEmpty
           ? _empty(cs)
-          : RefreshIndicator(
+          : ExpressiveRefreshIndicator(
               onRefresh: _load,
               child: ListView.separated(
                 padding: const EdgeInsets.all(16),

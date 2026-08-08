@@ -18,6 +18,7 @@ import '../../widgets/connection_status.dart';
 import '../../widgets/custom_notification.dart';
 import '../../widgets/info_action_sheet.dart';
 import '../../widgets/section_header.dart';
+import '../../widgets/small_spinner.dart';
 import '../auth/login_screen.dart';
 
 enum SpoofingMethod { partial, full }
@@ -213,13 +214,11 @@ class _SpoofScreenState extends State<SpoofScreen> {
       _deviceNameController.text =
           '${androidInfo.manufacturer} ${androidInfo.model}';
       _osVersionController.text = 'Android ${androidInfo.version.release}';
-      _selectedArch = androidInfo.supportedAbis.isNotEmpty
-          ? androidInfo.supportedAbis.first
-          : 'arm64-v8a';
+      _selectedArch = 'arm64-v8a';
     } else if (Platform.isIOS) {
       final iosInfo = await deviceInfo.iosInfo;
       _selectedDeviceType = 'ANDROID';
-      _selectedArch = 'arm64';
+      _selectedArch = 'arm64-v8a';
       _deviceNameController.text = iosInfo.utsname.machine;
       _osVersionController.text = iosInfo.systemVersion;
     } else if (Platform.isLinux) {
@@ -273,7 +272,7 @@ class _SpoofScreenState extends State<SpoofScreen> {
       _spoofingEnabled = true;
 
       _selectedDeviceType = preset.deviceType;
-      _selectedArch = preset.deviceType == 'IOS' ? 'arm64' : 'arm64-v8a';
+      _selectedArch = 'arm64-v8a';
       _buildNumberController.text = '$_hardcodedBuildNumber';
 
       if (_selectedMethod == SpoofingMethod.full) {
@@ -444,7 +443,7 @@ class _SpoofScreenState extends State<SpoofScreen> {
         centerTitle: true,
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const Center(child: SmallSpinner(size: 36))
           : SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 8, 16, 120),
               child: Column(

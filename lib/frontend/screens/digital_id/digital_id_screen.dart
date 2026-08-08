@@ -1,15 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:m3e_collection/m3e_collection.dart'
+    show ExpressiveRefreshIndicator;
 import 'package:material_symbols_icons/symbols.dart';
 
 import '../../../backend/modules/digital_id.dart';
 import '../../../backend/modules/webapp.dart';
 import '../../../core/utils/webview_support.dart';
 import '../../../l10n/app_localizations.dart';
-import '../../../main.dart' show digitalIdModule;
+import '../../../main.dart' show digitalIdModule, webAppModule;
 import '../../../models/digital_id.dart';
 import '../../widgets/connection_status.dart';
+import '../../widgets/reload_on_reconnect.dart';
 import '../../widgets/custom_notification.dart';
 import '../../widgets/error_view.dart';
+import '../../widgets/small_spinner.dart';
 import '../webapp/web_app_screen.dart';
 
 String _documentLabel(AppLocalizations l10n, String type) {
@@ -38,7 +42,8 @@ class DigitalIdScreen extends StatefulWidget {
   State<DigitalIdScreen> createState() => _DigitalIdScreenState();
 }
 
-class _DigitalIdScreenState extends State<DigitalIdScreen> {
+class _DigitalIdScreenState extends State<DigitalIdScreen>
+    with ReloadOnReconnect {
   bool _loading = true;
   bool _busy = false;
   String? _error;
@@ -52,6 +57,9 @@ class _DigitalIdScreenState extends State<DigitalIdScreen> {
     super.initState();
     _load();
   }
+
+  @override
+  void reloadAfterReconnect() => _load();
 
   Future<void> _load() async {
     setState(() {
@@ -120,9 +128,13 @@ class _DigitalIdScreenState extends State<DigitalIdScreen> {
           builder: (context) => WebAppScreen(
             title: AppLocalizations.of(context)!.digitalIdGosuslugiTitle,
             loader: () async => WebAppLaunch(url: link.url),
+            onExternalCallback: webAppModule.handleExternalCallback,
+            closeAfterExternalCallback: true,
           ),
         ),
       );
+      if (!mounted) return;
+      await digitalIdModule.loadDocuments(createIfMissing: true);
       if (!mounted) return;
       await _load();
     } on DigitalIdException catch (e) {
@@ -198,7 +210,7 @@ class _DigitalIdScreenState extends State<DigitalIdScreen> {
 
   Widget _buildBody(ColorScheme cs) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: SmallSpinner(size: 36));
     }
     if (_error != null) {
       return ErrorView(message: _error!, onRetry: _load);
@@ -206,7 +218,7 @@ class _DigitalIdScreenState extends State<DigitalIdScreen> {
     if (_docs == null) {
       return _buildOnboarding(cs);
     }
-    return RefreshIndicator(
+    return ExpressiveRefreshIndicator(
       onRefresh: _load,
       child: ListView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -278,11 +290,7 @@ class _DigitalIdScreenState extends State<DigitalIdScreen> {
                   child: FilledButton.icon(
                     onPressed: _busy ? null : _linkGosuslugi,
                     icon: _busy
-                        ? const SizedBox(
-                            width: 18,
-                            height: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
+                        ? const SmallSpinner(size: 18)
                         : const Icon(Symbols.link, size: 18),
                     label: Text(
                       l10n.digitalIdLinkGosuslugiButton,
